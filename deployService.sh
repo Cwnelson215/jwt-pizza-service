@@ -32,7 +32,7 @@ ENDSSH
 # Step 3
 printf "\n----> Copy the distribution package to the target\n"
 scp -r -i "$key" dist/* ubuntu@$hostname:services/$service
-
+qhjlojg1
 # Step 4
 printf "\n----> Deploy the service on the target\n"
 ssh -i "$key" ubuntu@$hostname << ENDSSH
