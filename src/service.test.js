@@ -12,7 +12,7 @@ beforeAll(async () => {
 });
 
 test('login', async () => {
-  const loginRes = await request(app).put('/api/auth').send(testUser);
+  const loginRes = await request(app).put('/api/auth/login').send(testUser);
   expect(loginRes.status).toBe(200);
   expectValidJwt(loginRes.body.token);
 
