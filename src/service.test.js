@@ -23,7 +23,6 @@ beforeAll(async () => {
   expectValidJwt(testUserAuthToken);
 });
 
-// Authentication tests
 test('register - success and password validation', async () => {
   const email = Math.random().toString(36).substring(2, 12) + '@test.com';
   const res = await request(app).post('/api/auth').send({ name: 'test user', email, password: 'validpass' });
@@ -58,7 +57,6 @@ test('logout - success and re-logout fails', async () => {
   expect(logoutRes2.status).toBe(401);
 });
 
-// Menu tests
 test('menu - get and auth requirements', async () => {
   const menuRes = await request(app).get('/api/order/menu');
   expect(menuRes.status).toBe(200);
@@ -72,7 +70,6 @@ test('menu - get and auth requirements', async () => {
   expect(noAdminRes.status).toBe(403);
 });
 
-// Order tests
 test('orders - create, list, and auth', async () => {
   const user = await request(app).post('/api/auth').send(testUser);
   const token = user.body.token;
@@ -91,7 +88,6 @@ test('orders - create, list, and auth', async () => {
   expect(noAuthRes.status).toBe(401);
 });
 
-// Franchise tests
 test('franchise - crud operations and auth', async () => {
   const user = await request(app).post('/api/auth').send(testUser);
   const token = user.body.token;
@@ -117,7 +113,6 @@ test('franchise - crud operations and auth', async () => {
   expect(noAuthRes.status).toBe(401);
 });
 
-// Store tests
 test('stores - create and delete with auth', async () => {
   const user = await request(app).post('/api/auth').send(testUser);
   const token = user.body.token;
@@ -135,7 +130,7 @@ test('stores - create and delete with auth', async () => {
   expect(noAuthDeleteRes.status).toBe(401);
 });
 
-// User and security tests
+
 test('users - update and token validation', async () => {
   const user = await request(app).post('/api/auth').send(testUser);
   const token = user.body.token;
@@ -150,7 +145,7 @@ test('users - update and token validation', async () => {
   expect(invalidTokenRes.status).toBe(401);
 });
 
-// General endpoints
+
 test('general endpoints - documentation and 404', async () => {
   const docRes = await request(app).get('/api/');
   expect([200, 404]).toContain(docRes.status);
@@ -162,7 +157,6 @@ test('general endpoints - documentation and 404', async () => {
   expect([200, 401]).toContain(deleteNoAuthRes.status);
 });
 
-// Additional coverage for edge cases
 test('duplicate email registration and name updates', async () => {
   const email = Math.random().toString(36).substring(2, 12) + '@test.com';
   const user1 = { name: 'user one', email, password: 'pass123' };
