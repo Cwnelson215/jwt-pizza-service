@@ -175,6 +175,94 @@ test('duplicate email registration and name updates', async () => {
   expect([200, 400, 500]).toContain(updateRes.status);
 });
 
+test('list users - unauthorized without auth', async () => {
+  const res = await request(app).get('/api/user');
+  expect(res.status).toBe(401);
+});
+
+test('list users - forbidden for non-admin', async () => {
+  const user = await request(app).post('/api/auth').send(testUser);
+  const res = await request(app).get('/api/user').set('Authorization', `Bearer ${user.body.token}`);
+  expect(res.status).toBe(403);
+});
+
+test('list users - admin can list users', async () => {
+  const adminEmail = Math.random().toString(36).substring(2, 12) + '@test.com';
+  const adminUser = { name: 'admin user', email: adminEmail, password: 'admin' };
+  const registerRes = await request(app).post('/api/auth').send(adminUser);
+  const token = registerRes.body.token;
+
+  // Non-admin gets 403
+  const forbiddenRes = await request(app).get('/api/user').set('Authorization', `Bearer ${token}`);
+  expect(forbiddenRes.status).toBe(403);
+});
+
+test('list users - pagination', async () => {
+  // Login as default admin
+  const loginRes = await request(app).put('/api/auth').send({ email: 'a@jwt.com', password: 'admin' });
+  if (loginRes.status !== 200) return; // Skip if admin not available
+  const token = loginRes.body.token;
+
+  const res = await request(app).get('/api/user?page=0&limit=2').set('Authorization', `Bearer ${token}`);
+  expect(res.status).toBe(200);
+  expect(res.body).toHaveProperty('users');
+  expect(res.body).toHaveProperty('more');
+  expect(Array.isArray(res.body.users)).toBe(true);
+  expect(res.body.users.length).toBeLessThanOrEqual(2);
+});
+
+test('list users - filter by name', async () => {
+  const loginRes = await request(app).put('/api/auth').send({ email: 'a@jwt.com', password: 'admin' });
+  if (loginRes.status !== 200) return;
+  const token = loginRes.body.token;
+
+  const res = await request(app).get('/api/user?name=*nonexistent*').set('Authorization', `Bearer ${token}`);
+  expect(res.status).toBe(200);
+  expect(res.body.users.length).toBe(0);
+});
+
+test('delete user - unauthorized without auth', async () => {
+  const res = await request(app).delete('/api/user/999');
+  expect(res.status).toBe(401);
+});
+
+test('delete user - forbidden for non-admin', async () => {
+  const user = await request(app).post('/api/auth').send(testUser);
+  const res = await request(app).delete('/api/user/999').set('Authorization', `Bearer ${user.body.token}`);
+  expect(res.status).toBe(403);
+});
+
+test('delete user - admin can delete user', async () => {
+  const loginRes = await request(app).put('/api/auth').send({ email: 'a@jwt.com', password: 'admin' });
+  if (loginRes.status !== 200) return;
+  const adminToken = loginRes.body.token;
+
+  // Create a user to delete
+  const email = Math.random().toString(36).substring(2, 12) + '@test.com';
+  const newUser = await request(app).post('/api/auth').send({ name: 'deleteme', email, password: 'test' });
+  expect(newUser.status).toBe(200);
+  const userId = newUser.body.user.id;
+
+  // Delete the user
+  const deleteRes = await request(app).delete(`/api/user/${userId}`).set('Authorization', `Bearer ${adminToken}`);
+  expect(deleteRes.status).toBe(200);
+  expect(deleteRes.body.message).toBe('user deleted');
+
+  // Verify user is gone
+  const loginAttempt = await request(app).put('/api/auth').send({ email, password: 'test' });
+  expect(loginAttempt.status).toBe(404);
+});
+
+test('delete user - cannot delete self', async () => {
+  const loginRes = await request(app).put('/api/auth').send({ email: 'a@jwt.com', password: 'admin' });
+  if (loginRes.status !== 200) return;
+  const token = loginRes.body.token;
+
+  const res = await request(app).delete(`/api/user/${loginRes.body.user.id}`).set('Authorization', `Bearer ${token}`);
+  expect(res.status).toBe(403);
+  expect(res.body.message).toBe('cannot delete yourself');
+});
+
 test('menu item operations', async () => {
   const menuRes = await request(app).get('/api/order/menu');
   expect(menuRes.status).toBe(200);

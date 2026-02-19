@@ -22,6 +22,22 @@ userRouter.docs = [
     example: `curl -X PUT localhost:3000/api/user/1 -d '{"name":"常用名字", "email":"a@jwt.com", "password":"admin"}' -H 'Content-Type: application/json' -H 'Authorization: Bearer tttttt'`,
     response: { user: { id: 1, name: '常用名字', email: 'a@jwt.com', roles: [{ role: 'admin' }] }, token: 'tttttt' },
   },
+  {
+    method: 'GET',
+    path: '/api/user',
+    requiresAuth: true,
+    description: 'List all users (admin only)',
+    example: `curl -X GET localhost:3000/api/user?page=0&limit=10&name=* -H 'Authorization: Bearer tttttt'`,
+    response: { users: [{ id: 1, name: '常用名字', email: 'a@jwt.com', roles: [{ role: 'admin' }] }], more: false },
+  },
+  {
+    method: 'DELETE',
+    path: '/api/user/:userId',
+    requiresAuth: true,
+    description: 'Delete a user (admin only)',
+    example: `curl -X DELETE localhost:3000/api/user/1 -H 'Authorization: Bearer tttttt'`,
+    response: { message: 'user deleted' },
+  },
 ];
 
 // getUser
@@ -56,7 +72,15 @@ userRouter.delete(
   '/:userId',
   authRouter.authenticateToken,
   asyncHandler(async (req, res) => {
-    res.json({ message: 'not implemented' });
+    const userId = Number(req.params.userId);
+    if (!req.user.isRole(Role.Admin)) {
+      return res.status(403).json({ message: 'unauthorized' });
+    }
+    if (req.user.id === userId) {
+      return res.status(403).json({ message: 'cannot delete yourself' });
+    }
+    await DB.deleteUser(userId);
+    res.json({ message: 'user deleted' });
   })
 );
 
@@ -65,7 +89,14 @@ userRouter.get(
   '/',
   authRouter.authenticateToken,
   asyncHandler(async (req, res) => {
-    res.json({ message: 'not implemented', users: [], more: false });
+    if (!req.user.isRole(Role.Admin)) {
+      return res.status(403).json({ message: 'unauthorized' });
+    }
+    const page = Number(req.query.page) || 0;
+    const limit = Number(req.query.limit) || 10;
+    const name = req.query.name || '*';
+    const result = await DB.getUsers(page, limit, name);
+    res.json(result);
   })
 );
 
