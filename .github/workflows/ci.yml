@@ -103,7 +103,8 @@ jobs:
           };" > src/config.js
 
       - name: Write version.json
-        run: printf '{"version": "%s" }' "${{ needs.build.outputs.version }}" > src/version.json
+        run: |
+          printf '{"version": "%s" }' "${{ needs.build.outputs.version }}" > src/version.json
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
