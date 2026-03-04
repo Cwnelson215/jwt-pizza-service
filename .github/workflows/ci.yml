@@ -127,5 +127,5 @@ jobs:
         run: |
           aws ecs update-service \
             --cluster portfolio-dev-cluster \
-            --service jwt-pizza-service \
+            --service jwt-pizza-services-service-ymsse91q \
             --force-new-deployment
