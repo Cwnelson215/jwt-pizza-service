@@ -161,6 +161,9 @@ class Metrics {
   }
 
   async sendMetrics() {
+    if (!config.metrics) {
+      return;
+    }
     const { endpointUrl, accountId, apiKey } = config.metrics;
     if (!endpointUrl || !accountId || !apiKey) {
       return;
