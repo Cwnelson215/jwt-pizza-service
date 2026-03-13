@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Simulate traffic for jwt-pizza-service metrics
-HOST="http://localhost:3000"
+HOST="https://pizza.cwnel.com"
 TOKENS=()
 
 while true; do
